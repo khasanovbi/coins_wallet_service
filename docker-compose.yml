@@ -1,17 +1,28 @@
-version: '3'
+version: '2.4'
 
 services:
   postgres:
     image: postgres:alpine
-    ports:
-      - "5432:5432"
     environment:
       - "POSTGRES_DB=cws_db"
       - "POSTGRES_USER=cws_user"
       - "POSTGRES_PASSWORD=cws_password"
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: always
+
+  app:
+    build:
+      context: .
+      args:
+        install_dev: "true"
+    environment:
+      - DJANGO_SETTINGS_MODULE=coins_wallet_service.test_settings
+    depends_on:
+      postgres:
+        condition: service_started

@@ -2,16 +2,18 @@ FROM python:3.7-alpine
 
 WORKDIR /usr/src/coins_wallet_service
 
-RUN pip install poetry && poetry config settings.virtualenvs.create false
+RUN apk update && apk add postgresql-dev gcc python3-dev musl-dev \
+    && pip install poetry && poetry config settings.virtualenvs.create false \
+    && pip install gunicorn
 
 COPY poetry.lock pyproject.toml ./
 
-RUN poetry install --no-dev --no-interaction
+ARG install_dev=false
+RUN poetry install $([ "$install_dev" == "false" ] && echo "--no-dev") --no-interaction
 
 COPY . ./
 
-COPY coins_wallet_service/settings.py ./coins_wallet_service/settings.py
-
 EXPOSE 8000
 
-ENTRYPOINT ["./docker/entrypoint.sh"]
+CMD ["gunicorn", "coins_wallet_service.wsgi:application", "--bind=0.0.0.0:8000", \
+    "--log-level=debug", "--workers=4"]
