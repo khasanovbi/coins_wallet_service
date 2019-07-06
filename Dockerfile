@@ -8,8 +8,7 @@ RUN apk update && apk add postgresql-dev gcc python3-dev musl-dev \
 
 COPY poetry.lock pyproject.toml ./
 
-ARG install_dev=false
-RUN poetry install $([ "$install_dev" == "false" ] && echo "--no-dev") --no-interaction
+RUN poetry install --no-dev --no-interaction
 
 COPY . ./
 

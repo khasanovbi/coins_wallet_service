@@ -11,7 +11,7 @@ DATABASES = {
         "NAME": "cws_db",
         "USER": "cws_user",
         "PASSWORD": "cws_password",
-        "HOST": "postgres",
+        "HOST": "localhost",
         "PORT": "5432",
     }
 }
