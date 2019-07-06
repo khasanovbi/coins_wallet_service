@@ -16,10 +16,14 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls import url
 from django.urls import include, path
+from rest_framework.documentation import include_docs_urls
 
 from payment import urls as payment_urls
 
-urlpatterns = [url(r"^payment", include(payment_urls))]
+urlpatterns = [
+    url(r"^payment", include(payment_urls)),
+    url(r"^docs/", include_docs_urls(title="Coins wallet service API")),
+]
 
 if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
     import debug_toolbar
