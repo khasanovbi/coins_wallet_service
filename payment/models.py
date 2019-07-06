@@ -40,6 +40,7 @@ class Account(models.Model):
 
 
 class Payment(models.Model):
+    created_datetime = models.DateTimeField(auto_now_add=True)
     source_account = models.ForeignKey(
         Account, related_name="outgoing_payments", on_delete=models.PROTECT
     )
