@@ -19,9 +19,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "payment",
     "django_extensions",
+    "django_filters",
     "rest_framework",
+    "payment",
 ]
 
 MIDDLEWARE = [
@@ -85,3 +86,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 
 DEBUG = False
+
+REST_FRAMEWORK = {
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",)
+}
