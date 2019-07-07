@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 from django.urls import reverse
-from hamcrest import assert_that, equal_to, has_entries, has_item, is_not
+from hamcrest import assert_that, empty, equal_to, has_entries, has_item, is_not
 from rest_framework import status
 
 from payment.models import Account, CurrencyField
@@ -118,3 +118,30 @@ class TestCreateAccount:
             response.json(),
             equal_to({"currency": [f'"{unexpected_currency}" is not a valid choice.']}),
         )
+
+
+class TestListAccounts:
+    @pytest.fixture(scope="session")
+    def list_accounts_request_factory(self, api_client):
+        def list_accounts():
+            return api_client.get(reverse("payment:account-list"))
+
+        return list_accounts
+
+    def test_zero_account_list(self, list_accounts_request_factory):
+        response = list_accounts_request_factory()
+        assert_that(response.status_code, equal_to(status.HTTP_200_OK), response.json())
+        assert_that(response.json(), empty())
+
+    def test_some_account_list(self, list_accounts_request_factory, account):
+        response = list_accounts_request_factory()
+        assert_that(response.status_code, equal_to(status.HTTP_200_OK), response.json())
+        expected_response = [
+            {
+                "id": account.id,
+                "name": account.name,
+                "balance": quantize_balance(account.balance),
+                "currency": account.currency,
+            }
+        ]
+        assert_that(response.json(), equal_to(expected_response))
