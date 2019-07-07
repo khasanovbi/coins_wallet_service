@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 
-from payment.models import Account, CurrencyField
+from wallet.models import Account, CurrencyField
 
 
 @pytest.fixture(scope="session")

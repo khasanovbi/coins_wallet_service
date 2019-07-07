@@ -12,7 +12,7 @@ from hamcrest import (
 )
 from rest_framework import status
 
-from payment.models import Account, CurrencyField
+from wallet.models import Account, CurrencyField
 
 from .utils import call_concurrently, quantize_balance
 
@@ -43,7 +43,7 @@ def another_currency_destination_account():
 @pytest.fixture(scope="session")
 def create_payment_request_factory(api_client):
     def create_payment(data):
-        return api_client.post(reverse("payment:payment-list"), data)
+        return api_client.post(reverse("wallet:payment-list"), data)
 
     return create_payment
 

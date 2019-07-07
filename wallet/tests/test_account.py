@@ -3,7 +3,7 @@ from django.urls import reverse
 from hamcrest import assert_that, empty, equal_to, has_entries, has_item, is_not
 from rest_framework import status
 
-from payment.models import CurrencyField
+from wallet.models import CurrencyField
 
 from .utils import quantize_balance
 
@@ -20,7 +20,7 @@ class TestCreateAccount:
     @pytest.fixture(scope="session")
     def create_account_request_factory(self, api_client):
         def create_account(data):
-            return api_client.post(reverse("payment:account-list"), data)
+            return api_client.post(reverse("wallet:account-list"), data)
 
         return create_account
 
@@ -113,7 +113,7 @@ class TestListAccounts:
     @pytest.fixture(scope="session")
     def list_accounts_request_factory(self, api_client):
         def list_accounts():
-            return api_client.get(reverse("payment:account-list"))
+            return api_client.get(reverse("wallet:account-list"))
 
         return list_accounts
 

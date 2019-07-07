@@ -18,10 +18,10 @@ from django.conf.urls import url
 from django.urls import include, path
 from rest_framework.documentation import include_docs_urls
 
-from payment import urls as payment_urls
+from wallet import urls as wallet_urls
 
 urlpatterns = [
-    url(r"^payment", include(payment_urls)),
+    url(r"^wallet", include(wallet_urls)),
     url(r"^docs/", include_docs_urls(title="Coins wallet service API")),
 ]
 
