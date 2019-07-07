@@ -1,0 +1,41 @@
+version: '2.4'
+
+services:
+  postgres:
+    image: postgres:alpine
+    environment:
+      - "POSTGRES_DB=prod_cws_db"
+      - "POSTGRES_USER=prod_cws_user"
+      - "POSTGRES_PASSWORD=prod_cws_password"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prod_cws_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  app:
+    build: .
+    environment:
+      - DJANGO_SETTINGS_MODULE=coins_wallet_service.prod_settings
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./docker/usr/src/coins_wallet_service/coins_wallet_service/prod_settings.py:/usr/src/coins_wallet_service/coins_wallet_service/prod_settings.py:ro
+      - app_static:/usr/src/coins_wallet_service/static/
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    volumes:
+      - ./docker/etc/nginx/conf.d/cws.conf:/etc/nginx/conf.d/cws.conf:ro
+      - app_static:/var/www/static/cws_app/:ro
+    restart: always
+
+volumes:
+  app_static:

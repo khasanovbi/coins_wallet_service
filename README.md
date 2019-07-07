@@ -48,3 +48,11 @@ To check your code you can run:
 ```bash
 tox -e flake8
 ```
+
+## Deploy
+
+You can start service with next command:
+
+```bash
+docker-compose up -d --build && docker-compose run --rm app python manage.py migrate
+```

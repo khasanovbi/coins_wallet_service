@@ -14,5 +14,4 @@ COPY . ./
 
 EXPOSE 8000
 
-CMD ["gunicorn", "coins_wallet_service.wsgi:application", "--bind=0.0.0.0:8000", \
-    "--log-level=debug", "--workers=4"]
+CMD ["docker/entrypoint.sh"]
