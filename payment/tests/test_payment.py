@@ -2,12 +2,19 @@ from decimal import Decimal
 
 import pytest
 from django.urls import reverse
-from hamcrest import assert_that, equal_to, has_entries, is_not
+from hamcrest import (
+    assert_that,
+    equal_to,
+    has_entries,
+    has_length,
+    is_not,
+    only_contains,
+)
 from rest_framework import status
 
 from payment.models import Account, CurrencyField
 
-from .utils import quantize_balance
+from .utils import call_concurrently, quantize_balance
 
 pytestmark = pytest.mark.django_db
 
@@ -33,6 +40,14 @@ def another_currency_destination_account():
     )
 
 
+@pytest.fixture(scope="session")
+def create_payment_request_factory(api_client):
+    def create_payment(data):
+        return api_client.post(reverse("payment:payment-list"), data)
+
+    return create_payment
+
+
 def make_create_payment_request_data(source_account, destination_account, amount="50"):
     return {
         "source_account": source_account.pk,
@@ -42,13 +57,6 @@ def make_create_payment_request_data(source_account, destination_account, amount
 
 
 class TestCreatePayment:
-    @pytest.fixture(scope="session")
-    def create_payment_request_factory(self, api_client):
-        def create_payment(data):
-            return api_client.post(reverse("payment:payment-list"), data)
-
-        return create_payment
-
     def test_valid(
         self, source_account, destination_account, create_payment_request_factory
     ):
@@ -246,3 +254,42 @@ class TestCreatePayment:
         )
         data["amount"] = quantize_balance(data["amount"])
         assert_that(response.json(), has_entries(data))
+
+
+@pytest.mark.django_db(transaction=True)
+def test_stress_multiple_payments_from_one_source_account_balance(
+    create_payment_request_factory, destination_account
+):
+    balance = 100
+    payment_amount = 5
+    source_account = Account.objects.create(
+        name="source_account_name", balance=balance, currency=CurrencyField.USD
+    )
+    data = make_create_payment_request_data(
+        source_account=source_account,
+        destination_account=destination_account,
+        amount=str(payment_amount),
+    )
+
+    concurrent_calls_count = 30
+    futures = call_concurrently(
+        concurrency=concurrent_calls_count,
+        calls_count=concurrent_calls_count,
+        target=create_payment_request_factory,
+        args=(data,),
+    )
+    responses = (future.result() for future in futures)
+
+    failed_responses = [
+        response
+        for response in responses
+        if response.status_code != status.HTTP_201_CREATED
+    ]
+    expected_failed_responses_count = concurrent_calls_count - balance / payment_amount
+    assert_that(failed_responses, has_length(expected_failed_responses_count))
+    assert_that(
+        [response.json() for response in failed_responses],
+        only_contains(
+            equal_to({"non_field_errors": ["insufficient funds to make a payment."]})
+        ),
+    )

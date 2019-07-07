@@ -50,7 +50,8 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     @atomic
     def create(self, validated_data):
-        # NOTE: use select_for_update to prevent less than 0 amount
+        # NOTE: use select_for_update to prevent less than 0 balance. As alternative
+        # we can catch IntegrityError at nonnegative_balance constraint fail.
         source_account = Account.objects.select_for_update().get(
             pk=validated_data["source_account"].pk
         )
