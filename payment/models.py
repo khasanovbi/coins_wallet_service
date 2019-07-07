@@ -47,7 +47,9 @@ class Payment(models.Model):
     destination_account = models.ForeignKey(
         Account, related_name="incoming_payments", on_delete=models.PROTECT
     )
-    amount = models.DecimalField(max_digits=19, decimal_places=2)
+    amount = models.DecimalField(
+        max_digits=19, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+    )
     currency = CurrencyField()
 
     class Meta:
@@ -55,7 +57,8 @@ class Payment(models.Model):
             CheckConstraint(
                 check=~Q(source_account=F("destination_account")),
                 name="source_destination_accounts_difference",
-            )
+            ),
+            CheckConstraint(check=Q(amount__gt=0), name="positive_amount"),
         ]
         verbose_name = _("payment")
         verbose_name_plural = _("payments")

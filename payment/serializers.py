@@ -15,7 +15,15 @@ class AccountSerializer(serializers.ModelSerializer):
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
-        fields = ("id", "source_account", "destination_account", "amount", "currency")
+        fields = (
+            "id",
+            "source_account",
+            "destination_account",
+            "amount",
+            "currency",
+            "created_datetime",
+        )
+        read_only_fields = ("currency",)
 
     def validate(self, data):
         source_account = data["source_account"]

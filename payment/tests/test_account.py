@@ -1,30 +1,19 @@
-from decimal import Decimal
-
 import pytest
 from django.urls import reverse
 from hamcrest import assert_that, empty, equal_to, has_entries, has_item, is_not
 from rest_framework import status
 
-from payment.models import Account, CurrencyField
+from payment.models import CurrencyField
+
+from .utils import quantize_balance
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def account():
-    return Account.objects.create(
-        name="account_name", balance="100", currency=CurrencyField.USD
-    )
 
 
 def make_create_account_request_data(
     name="account_name", balance="123.45", currency=CurrencyField.USD
 ):
     return {"name": name, "balance": balance, "currency": currency}
-
-
-def quantize_balance(balance):
-    return str(Decimal(balance).quantize(Decimal("1.00")))
 
 
 class TestCreateAccount:
