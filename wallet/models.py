@@ -22,11 +22,16 @@ class CurrencyField(models.CharField):
 
 
 class Account(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    balance = models.DecimalField(
-        max_digits=19, decimal_places=2, validators=[MinValueValidator(Decimal("0"))]
+    name = models.CharField(
+        max_length=50, unique=True, help_text=_("unique name of account")
     )
-    currency = CurrencyField()
+    balance = models.DecimalField(
+        max_digits=19,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text=_("amount of money in account"),
+    )
+    currency = CurrencyField(help_text=_("money currency of account"))
 
     class Meta:
         constraints = [
@@ -40,17 +45,28 @@ class Account(models.Model):
 
 
 class Payment(models.Model):
-    created_datetime = models.DateTimeField(auto_now_add=True)
+    created_datetime = models.DateTimeField(
+        auto_now_add=True, help_text=_("time of payment")
+    )
     source_account = models.ForeignKey(
-        Account, related_name="outgoing_payments", on_delete=models.PROTECT
+        Account,
+        related_name="outgoing_payments",
+        on_delete=models.PROTECT,
+        help_text=_("account from which money comes"),
     )
     destination_account = models.ForeignKey(
-        Account, related_name="incoming_payments", on_delete=models.PROTECT
+        Account,
+        related_name="incoming_payments",
+        on_delete=models.PROTECT,
+        help_text=_("account to which money comes"),
     )
     amount = models.DecimalField(
-        max_digits=19, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+        max_digits=19,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text=_("payment amount"),
     )
-    currency = CurrencyField()
+    currency = CurrencyField(help_text=_("money currency of payment"))
 
     class Meta:
         constraints = [

@@ -16,14 +16,34 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls import url
 from django.urls import include, path
-from rest_framework.documentation import include_docs_urls
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 
 from wallet import urls as wallet_urls
 
-urlpatterns = [
-    url(r"^wallet", include(wallet_urls)),
-    url(r"^docs/", include_docs_urls(title="Coins wallet service API")),
+schema_view = get_schema_view(
+    openapi.Info(title="Coins wallet service API", default_version="v1"),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
+
+api_urlpatterns = [url(r"^wallet", include(wallet_urls))]
+
+docs_urlpatterns = [
+    url(
+        r"^swagger(?P<format>\.json|\.yaml)$",
+        schema_view.without_ui(cache_timeout=0),
+        name="schema-json",
+    ),
+    url(
+        r"^swagger/$",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
 ]
+
+urlpatterns = api_urlpatterns + docs_urlpatterns
 
 if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
     import debug_toolbar
