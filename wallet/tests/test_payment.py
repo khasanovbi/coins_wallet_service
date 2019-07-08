@@ -4,6 +4,7 @@ import pytest
 from django.urls import reverse
 from hamcrest import (
     assert_that,
+    empty,
     equal_to,
     has_entries,
     has_length,
@@ -12,7 +13,7 @@ from hamcrest import (
 )
 from rest_framework import status
 
-from wallet.models import Account, CurrencyField
+from wallet.models import Account, CurrencyField, Payment
 
 from .utils import call_concurrently, quantize_balance
 
@@ -40,12 +41,30 @@ def another_currency_destination_account():
     )
 
 
+@pytest.fixture
+def payment(source_account, destination_account):
+    return Payment.objects.create(
+        source_account=source_account,
+        destination_account=destination_account,
+        amount="100",
+        currency=CurrencyField.USD,
+    )
+
+
 @pytest.fixture(scope="session")
 def create_payment_request_factory(api_client):
-    def create_payment(data):
+    def create_payment(data=None):
         return api_client.post(reverse("wallet:payment-list"), data)
 
     return create_payment
+
+
+@pytest.fixture(scope="session")
+def list_payments_request_factory(api_client):
+    def list_payments(data=None):
+        return api_client.get(reverse("wallet:payment-list"), data)
+
+    return list_payments
 
 
 def make_create_payment_request_data(source_account, destination_account, amount="50"):
@@ -87,7 +106,7 @@ class TestCreatePayment:
         )
 
     def test_required_field(self, create_payment_request_factory):
-        response = create_payment_request_factory(None)
+        response = create_payment_request_factory()
         assert_that(
             response.status_code, equal_to(status.HTTP_400_BAD_REQUEST), response.json()
         )
@@ -293,3 +312,28 @@ def test_stress_multiple_payments_from_one_source_account_balance(
             equal_to({"non_field_errors": ["insufficient funds to make a payment."]})
         ),
     )
+
+
+class TestListPayments:
+    def test_zero_payment_list(self, list_payments_request_factory):
+        response = list_payments_request_factory()
+        assert_that(response.status_code, equal_to(status.HTTP_200_OK), response.json())
+        assert_that(response.json(), empty())
+
+    def test_some_payment_list(self, list_payments_request_factory, payment):
+        response = list_payments_request_factory()
+        response_json = response.json()
+        assert_that(response.status_code, equal_to(status.HTTP_200_OK), response_json)
+        assert_that(response_json, has_length(1))
+        assert_that(
+            response_json[0],
+            has_entries(
+                {
+                    "id": payment.id,
+                    "source_account": payment.source_account.pk,
+                    "destination_account": payment.destination_account.pk,
+                    "amount": quantize_balance(payment.amount),
+                    "currency": payment.currency,
+                }
+            ),
+        )
